@@ -442,6 +442,7 @@ class BrokerServer(
           dynamicConfigHandlers.toMap,
         "broker"),
         authorizer,
+        credentialProvider,
         sharedServer.initialBrokerMetadataLoadFaultHandler,
         sharedServer.metadataPublishingFaultHandler)
 

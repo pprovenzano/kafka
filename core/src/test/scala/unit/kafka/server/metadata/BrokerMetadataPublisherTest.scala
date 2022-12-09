@@ -176,15 +176,24 @@ class BrokerMetadataPublisherTest {
     new TopicsImage(idsMap.asJava, namesMap.asJava)
   }
 
-  private def newMockDynamicConfigPublisher(
+  private def newMockPublisher(
     broker: BrokerServer,
-    errorHandler: FaultHandler
-  ): DynamicConfigPublisher = {
-    Mockito.spy(new DynamicConfigPublisher(
+    errorHandler: FaultHandler = new MockFaultHandler("publisher")
+  ): BrokerMetadataPublisher = {
+    Mockito.spy(new BrokerMetadataPublisher(
       conf = broker.config,
-      faultHandler = errorHandler,
+      metadataCache = broker.metadataCache,
+      logManager = broker.logManager,
+      replicaManager = broker.replicaManager,
+      groupCoordinator = broker.groupCoordinator,
+      txnCoordinator = broker.transactionCoordinator,
+      clientQuotaMetadataManager = broker.clientQuotaMetadataManager,
       dynamicConfigHandlers = broker.dynamicConfigHandlers.toMap,
-      nodeType = "broker"))
+      _authorizer = Option.empty,
+      credentialProvider = broker.credentialProvider,
+      errorHandler,
+      errorHandler
+    ))
   }
 
   @Test

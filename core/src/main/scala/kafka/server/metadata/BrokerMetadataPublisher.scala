@@ -22,7 +22,9 @@ import java.util.concurrent.atomic.AtomicLong
 import kafka.coordinator.group.GroupCoordinator
 import kafka.coordinator.transaction.TransactionCoordinator
 import kafka.log.{LogManager, UnifiedLog}
-import kafka.server.{KafkaConfig, ReplicaManager, RequestLocal}
+import kafka.security.CredentialProvider
+import kafka.server.ConfigAdminManager.toLoggableProps
+import kafka.server.{ConfigEntityName, ConfigHandler, ConfigType, KafkaConfig, ReplicaManager, RequestLocal}
 import kafka.utils.Logging
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.internals.Topic
@@ -103,6 +105,7 @@ class BrokerMetadataPublisher(
   clientQuotaMetadataManager: ClientQuotaMetadataManager,
   var dynamicConfigPublisher: DynamicConfigPublisher,
   private val _authorizer: Option[Authorizer],
+  credentialProvider: CredentialProvider,
   fatalFaultHandler: FaultHandler,
   metadataPublishingFaultHandler: FaultHandler
 ) extends MetadataPublisher with Logging {
@@ -219,6 +222,21 @@ class BrokerMetadataPublisher(
       } catch {
         case t: Throwable => metadataPublishingFaultHandler.handleFault("Error updating client " +
           s"quotas in ${deltaName}", t)
+      }
+
+      // Apply changes to SCRAM credentials.
+      Option(delta.scramDelta()).foreach { scramDelta =>
+        scramDelta.changes().forEach {
+          case (mechanism, userChanges) =>
+            userChanges.forEach {
+              case (userName, change) =>
+                if (change.isPresent) {
+                  credentialProvider.updateCredential(mechanism, userName, change.get().toCredential(mechanism))
+                } else {
+                  credentialProvider.removeCredentials(mechanism, userName)
+                }
+            }
+        }
       }
 
       // Apply changes to ACLs. This needs to be handled carefully because while we are

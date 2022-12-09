@@ -36,6 +36,8 @@ import org.apache.kafka.common.message.AlterPartitionRequestData;
 import org.apache.kafka.common.message.AlterPartitionResponseData;
 import org.apache.kafka.common.message.AlterPartitionReassignmentsRequestData;
 import org.apache.kafka.common.message.AlterPartitionReassignmentsResponseData;
+import org.apache.kafka.common.message.AlterUserScramCredentialsRequestData;
+import org.apache.kafka.common.message.AlterUserScramCredentialsResponseData;
 import org.apache.kafka.common.message.BrokerHeartbeatRequestData;
 import org.apache.kafka.common.message.BrokerRegistrationRequestData;
 import org.apache.kafka.common.message.CreatePartitionsRequestData.CreatePartitionsTopic;
@@ -550,7 +552,8 @@ public final class QuorumController implements Controller {
                         new Section("configuration", configurationControl.iterator(committedOffset)),
                         new Section("clientQuotas", clientQuotaControlManager.iterator(committedOffset)),
                         new Section("producerIds", producerIdControlManager.iterator(committedOffset)),
-                        new Section("acls", aclControlManager.iterator(committedOffset))
+                        new Section("acls", aclControlManager.iterator(committedOffset)),
+                        new Section("scram", scramControl.iterator(committedOffset))
                     )
                 );
                 reschedule(0);
@@ -1686,6 +1689,11 @@ public final class QuorumController implements Controller {
     private final ReplicationControlManager replicationControl;
 
     /**
+     * Manages SCRAM credentials, if there are any.
+     */
+    private final ScramControlManager scramControl;
+
+    /**
      * The ClusterMetadataAuthorizer, if one is configured. Note that this will still be
      * Optional.empty() if an Authorizer is configured that doesn't use __cluster_metadata.
      */
@@ -1905,6 +1913,10 @@ public final class QuorumController implements Controller {
             setCreateTopicPolicy(createTopicPolicy).
             setFeatureControl(featureControl).
             build();
+        this.scramControl = new ScramControlManager.Builder().
+            setLogContext(logContext).
+            setSnapshotRegistry(snapshotRegistry).
+            build();
         this.authorizer = authorizer;
         authorizer.ifPresent(a -> a.setAclMutator(this));
         this.aclControlManager = new AclControlManager(snapshotRegistry, authorizer);
@@ -1936,6 +1948,18 @@ public final class QuorumController implements Controller {
         }
         return appendWriteEvent("alterPartition", context.deadlineNs(),
             () -> replicationControl.alterPartition(context, request));
+    }
+
+    @Override
+    public CompletableFuture<AlterUserScramCredentialsResponseData> alterUserScramCredentials(
+        ControllerRequestContext context,
+        AlterUserScramCredentialsRequestData request
+    ) {
+        if (request.deletions().isEmpty() && request.upsertions().isEmpty()) {
+            return CompletableFuture.completedFuture(new AlterUserScramCredentialsResponseData());
+        }
+        return appendWriteEvent("alterUserScramCredentials", context.deadlineNs(),
+            () -> scramControl.alterCredentials(request));
     }
 
     @Override
