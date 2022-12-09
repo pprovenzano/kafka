@@ -102,7 +102,7 @@ public class ScramImageTest {
 
         Map<String, ScramCredentialData> image2sha512 = new HashMap<>();
         image2sha512.put("alpha", image1sha512.get("alpha"));
-        image2mechanisms.put(SCRAM_SHA_512, image1sha512);
+        image2mechanisms.put(SCRAM_SHA_512, image2sha512);
 
         IMAGE2 = new ScramImage(image2mechanisms);
     }
@@ -128,12 +128,9 @@ public class ScramImageTest {
     }
 
     private void testToImageAndBack(ScramImage image) throws Throwable {
-//        MockSnapshotConsumer writer = new MockSnapshotConsumer();
-//        image.write(writer);
         RecordListWriter writer = new RecordListWriter();
         image.write(writer, new ImageWriterOptions.Builder().build());
         ScramDelta delta = new ScramDelta(ScramImage.EMPTY);
-//        RecordTestUtils.replayAllBatches(delta, writer.batches());
         RecordTestUtils.replayAll(delta, writer.records());
         ScramImage nextImage = delta.apply();
         assertEquals(image, nextImage);
