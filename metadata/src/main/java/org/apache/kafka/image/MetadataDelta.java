@@ -229,7 +229,7 @@ public final class MetadataDelta {
                 replay((RemoveAccessControlEntryRecord) record);
                 break;
             case REMOVE_USER_SCRAM_CREDENTIAL_RECORD:
-                replay((UserScramCredentialRecord) record);
+                replay((RemoveUserScramCredentialRecord) record);
                 break;
             case NO_OP_RECORD:
                 /* NoOpRecord is an empty record and doesn't need to be replayed beyond
