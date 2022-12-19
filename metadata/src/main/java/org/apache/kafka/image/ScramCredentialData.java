@@ -85,7 +85,7 @@ public final class ScramCredentialData {
         ScramMechanism mechanism
     ) throws GeneralSecurityException {
         org.apache.kafka.common.security.scram.internals.ScramMechanism internalMechanism =
-                org.apache.kafka.common.security.scram.internals.ScramMechanism.forMechanismName(mechanism.name());
+                org.apache.kafka.common.security.scram.internals.ScramMechanism.forMechanismName(mechanism.mechanismName());
         ScramFormatter formatter = new ScramFormatter(internalMechanism);
         return new ScramCredential(salt,
                 formatter.storedKey(formatter.clientKey(saltedPassword)),

@@ -236,7 +236,7 @@ public class ScramControlManager {
         ApiError error = validateScramUsernameAndMechanism(upsertion.name(), mechanism);
         if (error.isFailure()) return error;
         org.apache.kafka.common.security.scram.internals.ScramMechanism internalMechanism =
-            org.apache.kafka.common.security.scram.internals.ScramMechanism.forMechanismName(mechanism.name());
+            org.apache.kafka.common.security.scram.internals.ScramMechanism.forMechanismName(mechanism.mechanismName());
         if (upsertion.iterations() < internalMechanism.minIterations()) {
             return new ApiError(UNACCEPTABLE_CREDENTIAL, "Too few iterations");
         } else if (upsertion.iterations() > MAX_ITERATIONS) {

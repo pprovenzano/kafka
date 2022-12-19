@@ -64,6 +64,7 @@ import org.apache.kafka.common.metadata.ProducerIdsRecord;
 import org.apache.kafka.common.metadata.RegisterBrokerRecord;
 import org.apache.kafka.common.metadata.RemoveAccessControlEntryRecord;
 import org.apache.kafka.common.metadata.RemoveTopicRecord;
+import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.apache.kafka.common.metadata.TopicRecord;
 import org.apache.kafka.common.metadata.UnfenceBrokerRecord;
 import org.apache.kafka.common.metadata.UnregisterBrokerRecord;
@@ -1518,6 +1519,9 @@ public final class QuorumController implements Controller {
                 break;
             case REMOVE_ACCESS_CONTROL_ENTRY_RECORD:
                 aclControlManager.replay((RemoveAccessControlEntryRecord) message, snapshotId);
+                break;
+            case USER_SCRAM_CREDENTIAL_RECORD:
+                scramControl.replay((UserScramCredentialRecord) message);
                 break;
             case NO_OP_RECORD:
                 // NoOpRecord is an empty record and doesn't need to be replayed
